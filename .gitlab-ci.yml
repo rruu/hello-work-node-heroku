@@ -1,0 +1,53 @@
+image: node:latest
+
+variables:
+  # heroku apps:create node-4991428079
+  DEV_APP: node-4991428079
+  PROD_APP: node-4991428079-dev
+
+
+stages:
+  - ver
+  - init
+  - deploy
+
+ver:
+  stage: ver
+  tags:
+    - docker
+  script:
+    - node --version
+    - whoami
+init:
+  stage: init
+  tags:
+    - docker
+  script:
+    #- npm cache clean
+    #- rm -rf node-modules
+    - npm install
+
+deploy_staging:
+  tags:
+    - docker
+  image: ruby:latest
+  stage: deploy
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=$DEV_APP --api-key=$HEROKU_API_KEY
+  only:
+    - master
+
+deploy_production:
+  image: ruby:latest
+  stage: deploy
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=node-4991428079 --api-key=$HEROKU_API_KEY
+  when: manual
+  only:
+    - master
